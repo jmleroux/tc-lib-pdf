@@ -36,12 +36,15 @@ use \Com\Tecnick\Pdf\Font\Output as OutFont;
  */
 abstract class Output
 {
+    protected $OutlineRoot;
+    protected $creator;
+    protected $pdfa;
     /**
      * Array containing the ID of some PDF objects
      *
      * @var array
      */
-    protected $objid = array();
+    protected $objid = [];
 
     /**
      * @var string
@@ -75,6 +78,13 @@ abstract class Output
     protected $pdfx;
 
     /**
+     * Defines the way the document is to be displayed by the viewer.
+     *
+     * @var string[]
+     */
+    protected $display = ['zoom' => 'default', 'layout' => 'SinglePage', 'mode' => 'UseNone'];
+
+    /**
      * Returns the RAW PDF string
      *
      * @return string
@@ -82,14 +92,15 @@ abstract class Output
     public function getOutPDFString()
     {
         $out = $this->getOutPDFHeader()
-            .$this->getOutPDFBody();
+            . $this->getOutPDFBody();
         $startxref = strlen($out);
         $offset = $this->getPDFObjectOffsets($out);
         $out .= $this->getOutPDFXref($offset)
-            .$this->getOutPDFTrailer()
-            .'startxref'."\n"
-            .$startxref."\n"
-            .'%%EOF'."\n";
+            . $this->getOutPDFTrailer()
+            . 'startxref' . "\n"
+            . $startxref . "\n"
+            . '%%EOF' . "\n";
+
         // @TODO: sign the document ...
         return $out;
     }
@@ -101,8 +112,8 @@ abstract class Output
      */
     protected function getOutPDFHeader()
     {
-        return '%PDF-'.$this->pdfver."\n"
-            ."%\xE2\xE3\xCF\xD3\n";
+        return '%PDF-' . $this->pdfver . "\n"
+            . "%\xE2\xE3\xCF\xD3\n";
     }
 
     /**
@@ -145,6 +156,7 @@ abstract class Output
         $out .= $this->getOutXMP();
         $out .= $this->getOutICC();
         $out .= $this->getOutCatalog();
+
         return $out;
     }
 
@@ -157,12 +169,13 @@ abstract class Output
      */
     protected function getPDFObjectOffsets($data)
     {
-        preg_match_all('/(([0-9]+)[\s][0-9]+[\s]obj[\n])/i', $data, $matches, PREG_SET_ORDER|PREG_OFFSET_CAPTURE);
-        $offset = array();
+        preg_match_all('/(([0-9]+)[\s][0-9]+[\s]obj[\n])/i', $data, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        $offset = [];
         foreach ($matches as $item) {
             $offset[($item[2][0])] = $item[2][1];
         }
         ksort($offset);
+
         return $offset;
     }
 
@@ -175,43 +188,43 @@ abstract class Output
      */
     protected function getOutPDFXref($offset)
     {
-        $out = 'xref'."\n"
-            .'0 '.($this->pon + 1)."\n"
-            .'0000000000 65535 f '."\n";
+        $out = 'xref' . "\n"
+            . '0 ' . ($this->pon + 1) . "\n"
+            . '0000000000 65535 f ' . "\n";
         $freegen = ($this->pon + 2);
         end($offset);
         $lastobj = key($offset);
         for ($idx = 1; $idx <= $lastobj; ++$idx) {
             if (isset($offset[$idx])) {
-                $out .= sprintf('%010d 00000 n '."\n", $offset[$idx]);
+                $out .= sprintf('%010d 00000 n ' . "\n", $offset[$idx]);
             } else {
-                $out .= sprintf('0000000000 %05d f '."\n", $freegen);
+                $out .= sprintf('0000000000 %05d f ' . "\n", $freegen);
                 ++$freegen;
             }
         }
+
         return $out;
     }
 
     /**
      * Returns the PDF Trailer section
      *
-     * @param array $offset Ordered offset array for each PDF object
-     *
      * @return string
      */
     protected function getOutPDFTrailer()
     {
-        $out = 'trailer'."\n"
-            .'<<'
-            .' /Size '.($this->pon + 1)
-            .' /Root '.$this->objid['catalog'].' 0 R'
-            .' /Info '.$this->objid['info'].' 0 R';
+        $out = 'trailer' . "\n"
+            . '<<'
+            . ' /Size ' . ($this->pon + 1)
+            . ' /Root ' . $this->objid['catalog'] . ' 0 R'
+            . ' /Info ' . $this->objid['info'] . ' 0 R';
         $enc = $this->encrypt->getEncryptionData();
         if (!empty($enc['objid'])) {
-            $out .= ' /Encrypt '.$enc['objid'].' 0 R';
+            $out .= ' /Encrypt ' . $enc['objid'] . ' 0 R';
         }
-        $out .= ' /ID [ <'.$this->fileid.'> <'.$this->fileid.'> ]'
-            .' >>'."\n";
+        $out .= ' /ID [ <' . $this->fileid . '> <' . $this->fileid . '> ]'
+            . ' >>' . "\n";
+
         return $out;
     }
 
@@ -228,18 +241,19 @@ abstract class Output
 
         $oid = ++$this->pon;
         $this->objid['srgbicc'] = $oid;
-        $out = $oid.' 0 obj'."\n";
-        $icc = file_get_contents(dirname(__FILE__).'/include/sRGB.icc.z');
+        $out = $oid . ' 0 obj' . "\n";
+        $icc = file_get_contents(dirname(__FILE__) . '/include/sRGB.icc.z');
         $icc = $this->encrypt->encryptString($icc, $oid);
         $out .= '<<'
-            .'/N 3'
-            .' /Filter /FlateDecode'
-            .' /Length '.strlen($icc)
-            .'>>'
-            .' stream'."\n"
-            .$icc."\n"
-            .'endstream'."\n"
-            .'endobj'."\n";
+            . '/N 3'
+            . ' /Filter /FlateDecode'
+            . ' /Length ' . strlen($icc)
+            . '>>'
+            . ' stream' . "\n"
+            . $icc . "\n"
+            . 'endstream' . "\n"
+            . 'endobj' . "\n";
+
         return $out;
     }
 
@@ -255,14 +269,15 @@ abstract class Output
         }
         $oid = $this->objid['catalog'];
         $out = ' /OutputIntents [<<'
-            .' /Type /OutputIntent'
-            .' /S /GTS_PDFA1'
-            .' /OutputCondition '.$this->getOutTextString('sRGB IEC61966-2.1', $oid)
-            .' /OutputConditionIdentifier '.$this->getOutTextString('sRGB IEC61966-2.1', $oid)
-            .' /RegistryName '.$this->getOutTextString('http://www.color.org', $oid)
-            .' /Info '.$this->getOutTextString('sRGB IEC61966-2.1', $oid)
-            .' /DestOutputProfile '.$this->objid['srgbicc'].' 0 R'
-            .' >>]';
+            . ' /Type /OutputIntent'
+            . ' /S /GTS_PDFA1'
+            . ' /OutputCondition ' . $this->getOutTextString('sRGB IEC61966-2.1', $oid)
+            . ' /OutputConditionIdentifier ' . $this->getOutTextString('sRGB IEC61966-2.1', $oid)
+            . ' /RegistryName ' . $this->getOutTextString('http://www.color.org', $oid)
+            . ' /Info ' . $this->getOutTextString('sRGB IEC61966-2.1', $oid)
+            . ' /DestOutputProfile ' . $this->objid['srgbicc'] . ' 0 R'
+            . ' >>]';
+
         return $out;
     }
 
@@ -275,12 +290,13 @@ abstract class Output
     {
         $oid = $this->objid['catalog'];
         $out = ' /OutputIntents [<<'
-            .' /Type /OutputIntent'
-            .' /S /GTS_PDFX'
-            .' /OutputConditionIdentifier '.$this->getOutTextString('OFCOM_PO_P1_F60_95', $oid)
-            .' /RegistryName '.$this->getOutTextString('http://www.color.org', $oid)
-            .' /Info '.$this->getOutTextString('OFCOM_PO_P1_F60_95', $oid)
-            .' >>]';
+            . ' /Type /OutputIntent'
+            . ' /S /GTS_PDFX'
+            . ' /OutputConditionIdentifier ' . $this->getOutTextString('OFCOM_PO_P1_F60_95', $oid)
+            . ' /RegistryName ' . $this->getOutTextString('http://www.color.org', $oid)
+            . ' /Info ' . $this->getOutTextString('OFCOM_PO_P1_F60_95', $oid)
+            . ' >>]';
+
         return $out;
     }
 
@@ -297,6 +313,7 @@ abstract class Output
         if ($this->pdfx) {
             $this->getOutputIntentsPdfX();
         }
+
         return $this->getOutputIntentsSrgb();
     }
 
@@ -315,7 +332,7 @@ abstract class Output
         $lyrobjs_off = '';
         $lyrobjs_lock = '';
         foreach ($this->pdflayer as $layer) {
-            $layer_obj_ref = ' '.$layer['objid'].' 0 R';
+            $layer_obj_ref = ' ' . $layer['objid'] . ' 0 R';
             $lyrobjs .= $layer_obj_ref;
             if ($layer['view'] === false) {
                 $lyrobjs_off .= $layer_obj_ref;
@@ -324,24 +341,25 @@ abstract class Output
                 $lyrobjs_lock .= $layer_obj_ref;
             }
         }
-        $out = ' /OCProperties << /OCGs ['.$lyrobjs.' ]'
-            .' /D <<'
-            .' /Name '.$this->getOutTextString('Layers', $oid)
-            .' /Creator '.$this->getOutTextString($this->creator, $oid)
-            .' /BaseState /ON'
-            .' /OFF ['.$lyrobjs_off.']'
-            .' /Locked ['.$lyrobjs_lock.']'
-            .' /Intent /View'
-            .' /AS ['
-            .' << /Event /Print /OCGs ['.$lyrobjs.'] /Category [/Print] >>'
-            .' << /Event /View /OCGs ['.$lyrobjs.'] /Category [/View] >>'
-            .' ]'
-            .' /Order ['.$lyrobjs.']'
-            .' /ListMode /AllPages'
+        $out = ' /OCProperties << /OCGs [' . $lyrobjs . ' ]'
+            . ' /D <<'
+            . ' /Name ' . $this->getOutTextString('Layers', $oid)
+            . ' /Creator ' . $this->getOutTextString($this->creator, $oid)
+            . ' /BaseState /ON'
+            . ' /OFF [' . $lyrobjs_off . ']'
+            . ' /Locked [' . $lyrobjs_lock . ']'
+            . ' /Intent /View'
+            . ' /AS ['
+            . ' << /Event /Print /OCGs [' . $lyrobjs . '] /Category [/Print] >>'
+            . ' << /Event /View /OCGs [' . $lyrobjs . '] /Category [/View] >>'
+            . ' ]'
+            . ' /Order [' . $lyrobjs . ']'
+            . ' /ListMode /AllPages'
             //.' /RBGroups ['..']'
             //.' /Locked ['..']'
-            .' >>'
-            .' >>';
+            . ' >>'
+            . ' >>';
+
         return $out;
     }
 
@@ -356,40 +374,40 @@ abstract class Output
         // @TODO
         $oid = ++$this->pon;
         $this->objid['catalog'] = $oid;
-        $out = $oid.' 0 obj'."\n"
-            .'<<'
-            .' /Type /Catalog'
-            .' /Version /'.$this->pdfver
+        $out = $oid . ' 0 obj' . "\n"
+            . '<<'
+            . ' /Type /Catalog'
+            . ' /Version /' . $this->pdfver
             //.' /Extensions <<>>'
-            .' /Pages 1 0 R'
+            . ' /Pages 1 0 R'
             //.' /PageLabels ' //...
-            .' /Names <<';
+            . ' /Names <<';
         if (!$this->pdfa && !empty($this->objid['javascript'])) {
-            $out .= ' /JavaScript '.$this->objid['javascript'];
+            $out .= ' /JavaScript ' . $this->objid['javascript'];
         }
         if (!empty($this->efnames)) {
             $out .= ' /EmbeddedFiles << /Names [';
             foreach ($this->efnames as $fn => $fref) {
-                $out .= ' '.$this->getOutTextString($fn, $oid).' '.$fref;
+                $out .= ' ' . $this->getOutTextString($fn, $oid) . ' ' . $fref;
             }
             $out .= ' ] >>';
         }
         $out .= ' >>';
 
         if (!empty($this->objid['dests'])) {
-            $out .= ' /Dests '.($this->objid['dests']).' 0 R';
+            $out .= ' /Dests ' . ($this->objid['dests']) . ' 0 R';
         }
 
         $out .= $this->getOutViewerPref();
 
         if (!empty($this->display['layout'])) {
-            $out .= ' /PageLayout /'.$this->display['layout'];
+            $out .= ' /PageLayout /' . $this->display['layout'];
         }
         if (!empty($this->display['mode'])) {
-            $out .= ' /PageMode /'.$this->display['mode'];
+            $out .= ' /PageMode /' . $this->display['mode'];
         }
         if (!empty($this->outlines)) {
-            $out .= ' /Outlines '.$this->OutlineRoot.' 0 R';
+            $out .= ' /Outlines ' . $this->OutlineRoot . ' 0 R';
             $out .= ' /PageMode /UseOutlines';
         }
 
@@ -398,23 +416,23 @@ abstract class Output
         $firstpage = $this->page->getPage(0);
         $fpo = $firstpage['n'];
         if ($this->display['zoom'] == 'fullpage') {
-            $out .= ' /OpenAction ['.$fpo.' 0 R /Fit]';
+            $out .= ' /OpenAction [' . $fpo . ' 0 R /Fit]';
         } elseif ($this->display['zoom'] == 'fullwidth') {
-            $out .= ' /OpenAction ['.$fpo.' 0 R /FitH null]';
+            $out .= ' /OpenAction [' . $fpo . ' 0 R /FitH null]';
         } elseif ($this->display['zoom'] == 'real') {
-            $out .= ' /OpenAction ['.$fpo.' 0 R /XYZ null null 1]';
+            $out .= ' /OpenAction [' . $fpo . ' 0 R /XYZ null null 1]';
         } elseif (!is_string($this->display['zoom'])) {
-            $out .= sprintf(' /OpenAction ['.$fpo.' 0 R /XYZ null null %F]', ($this->display['zoom'] / 100));
+            $out .= sprintf(' /OpenAction [' . $fpo . ' 0 R /XYZ null null %F]', ($this->display['zoom'] / 100));
         }
 
         //$out .= ' /AA <<>>';
         //$out .= ' /URI <<>>';
-        $out .= ' /Metadata '.$this->objid['xmp'].' 0 R';
+        $out .= ' /Metadata ' . $this->objid['xmp'] . ' 0 R';
         //$out .= ' /StructTreeRoot <<>>';
         //$out .= ' /MarkInfo <<>>';
 
         if (!empty($this->l['a_meta_language'])) {
-            $out .= ' /Lang '.$this->getOutTextString($this->l['a_meta_language'], $oid);
+            $out .= ' /Lang ' . $this->getOutTextString($this->l['a_meta_language'], $oid);
         }
 
         //$out .= ' /SpiderInfo <<>>';
@@ -488,8 +506,9 @@ abstract class Output
         //$out .= ' /Collection <<>>';
         //$out .= ' /NeedsRendering true';
 
-        $out .= ' >>'."\n"
-            .'endobj'."\n";
+        $out .= ' >>' . "\n"
+            . 'endobj' . "\n";
+
         return $out;
     }
 
@@ -507,19 +526,20 @@ abstract class Output
         foreach ($this->pdflayer as $key => $layer) {
             $oid = ++$this->pon;
             $this->pdflayer[$key]['objid'] = $oid;
-            $out .= $oid.' 0 obj'."\n";
+            $out .= $oid . ' 0 obj' . "\n";
             $out .= '<< '
-                .' /Type /OCG'
-                .' /Name '.$this->getOutTextString($layer['name'], $oid)
-                .' /Usage <<';
+                . ' /Type /OCG'
+                . ' /Name ' . $this->getOutTextString($layer['name'], $oid)
+                . ' /Usage <<';
             if (isset($layer['print']) && ($layer['print'] !== null)) {
-                $out .= ' /Print <</PrintState /'.$this->getOnOff($layer['print']).'>>';
+                $out .= ' /Print <</PrintState /' . $this->getOnOff($layer['print']) . '>>';
             }
-            $out .= ' /View <</ViewState /'.$this->getOnOff($layer['view']).'>>'
-                .' >>'
-                .' >>'."\n"
-                .'endobj'."\n";
+            $out .= ' /View <</ViewState /' . $this->getOnOff($layer['view']) . '>>'
+                . ' >>'
+                . ' >>' . "\n"
+                . 'endobj' . "\n";
         }
+
         return $out;
     }
 
@@ -542,17 +562,18 @@ abstract class Output
     protected function getOutResourcesDict()
     {
         $this->objid['resdic'] = $this->page->getResourceDictObjID();
-        $out = $this->objid['resdic'].' 0 obj'."\n"
-            .'<<'
-            .' /ProcSet [/PDF /Text /ImageB /ImageC /ImageI]'
-            .$this->getOutFontDic()
-            .$this->getXObjectDic()
-            .$this->getLayerDic()
-            .$this->graph->getOutExtGStateResources()
-            .$this->graph->getOutGradientResources()
-            .$this->color->getPdfSpotResources()
-            .' >>'."\n"
-            .'endobj'."\n";
+        $out = $this->objid['resdic'] . ' 0 obj' . "\n"
+            . '<<'
+            . ' /ProcSet [/PDF /Text /ImageB /ImageC /ImageI]'
+            . $this->getOutFontDic()
+            . $this->getXObjectDic()
+            . $this->getLayerDic()
+            . $this->graph->getOutExtGStateResources()
+            . $this->graph->getOutGradientResources()
+            . $this->color->getPdfSpotResources()
+            . ' >>' . "\n"
+            . 'endobj' . "\n";
+
         return $out;
     }
 
@@ -646,9 +667,10 @@ abstract class Output
         }
         $out = ' /Font <<';
         foreach ($fonts as $font) {
-            $out .= ' /F'.$font['i'].' '.$font['n'].' 0 R';
+            $out .= ' /F' . $font['i'] . ' ' . $font['n'] . ' 0 R';
         }
         $out .= ' >>';
+
         return $out;
     }
 
@@ -664,9 +686,10 @@ abstract class Output
         }
         $out = ' /XObject <<';
         foreach ($this->xobject as $id => $oid) {
-            $out .= ' /'.$id.' '.$oid['n'].' 0 R';
+            $out .= ' /' . $id . ' ' . $oid['n'] . ' 0 R';
         }
         $out .= ' >>';
+
         return $out;
     }
 
@@ -682,22 +705,26 @@ abstract class Output
         }
         $out = ' /Properties <<';
         foreach ($this->pdflayer as $layer) {
-            $out .= ' /'.$layer['layer'].' '.$layer['objid'].' 0 R';
+            $out .= ' /' . $layer['layer'] . ' ' . $layer['objid'] . ' 0 R';
         }
         $out .= ' >>';
+
         return $out;
     }
 
     /**
      * Returns 'ON' if $val is true, 'OFF' otherwise
      *
-     * return string
+     * @param $val
+     *
+     * @return string
      */
     protected function getOnOff($val)
     {
         if (true === $val) {
             return 'ON';
         }
+
         return 'OFF';
     }
 
@@ -709,5 +736,9 @@ abstract class Output
     protected function getOutViewerPref()
     {
         // TODO
+    }
+
+    protected function getOutMetaInfo()
+    {
     }
 }

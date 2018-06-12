@@ -103,20 +103,6 @@ class Tcpdf extends ClassObjects
     protected $pdfver = '1.7';
 
     /**
-     * Defines the way the document is to be displayed by the viewer.
-     *
-     * @var string[]
-     */
-    protected $display = array('zoom' => 'default', 'layout' => 'SinglePage', 'mode' => 'UseNone');
-
-    /**
-     * Valid zoom values
-     *
-     * @var string[]
-     */
-    protected $valid_zoom = array('fullpage', 'fullwidth', 'real', 'default');
-
-    /**
      * Initialize a new PDF object
      *
      * @param string     $unit       Unit of measure ('pt', 'mm', 'cm', 'in')
@@ -177,13 +163,14 @@ class Tcpdf extends ClassObjects
      */
     public function setDisplayMode($zoom = 'default', $layout = 'SinglePage', $mode = 'UseNone')
     {
-        if (is_numeric($zoom) || in_array($zoom, $this->valid_zoom)) {
+        if (is_numeric($zoom) || in_array($zoom, MetaInfo::$valid_zoom)) {
             $this->display['zoom'] = $zoom;
         } else {
             $this->display['zoom'] = 'default';
         }
         $this->display['layout'] = $this->page->getLayout($layout);
         $this->display['page'] = $this->page->getDisplay($mode);
+
         return $this;
     }
 }
