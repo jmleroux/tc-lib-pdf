@@ -15,7 +15,6 @@
 
 namespace Com\Tecnick\Pdf;
 
-use \Com\Tecnick\Pdf\Exception as PdfException;
 use \Com\Tecnick\Pdf\Encrypt\Encrypt as ObjEncrypt;
 
 /**
@@ -31,7 +30,7 @@ use \Com\Tecnick\Pdf\Encrypt\Encrypt as ObjEncrypt;
  * @license     http://www.gnu.org/copyleft/lesser.html GNU-LGPL v3 (see LICENSE.TXT)
  * @link        https://github.com/tecnickcom/tc-lib-pdf
  */
-class Tcpdf extends \Com\Tecnick\Pdf\ClassObjects
+class Tcpdf extends ClassObjects
 {
     /**
      * Document ID
@@ -106,18 +105,27 @@ class Tcpdf extends \Com\Tecnick\Pdf\ClassObjects
     /**
      * Defines the way the document is to be displayed by the viewer.
      *
-     * @var string
+     * @var string[]
      */
     protected $display = array('zoom' => 'default', 'layout' => 'SinglePage', 'mode' => 'UseNone');
 
     /**
+     * Valid zoom values
+     *
+     * @var string[]
+     */
+    protected $valid_zoom = array('fullpage', 'fullwidth', 'real', 'default');
+
+    /**
      * Initialize a new PDF object
      *
-     * @param string     $unit        Unit of measure ('pt', 'mm', 'cm', 'in')
-     * @param bool       $isunicode   True if the document is in Unicode mode
-     * @param bool       $subsetfont  If true subset the embedded fonts to remove the unused characters
-     * @param string     $mode        PDF mode: "pdfa", "pdfx" or empty
-     * @param ObjEncrypt $encobj      Encryption object
+     * @param string     $unit       Unit of measure ('pt', 'mm', 'cm', 'in')
+     * @param bool       $isunicode  True if the document is in Unicode mode
+     * @param bool       $subsetfont If true subset the embedded fonts to remove the unused characters
+     * @param string     $mode       PDF mode: "pdfa", "pdfx" or empty
+     * @param ObjEncrypt $encobj     Encryption object
+     *
+     * @throws Exception
      */
     public function __construct(
         $unit = 'mm',
@@ -129,7 +137,7 @@ class Tcpdf extends \Com\Tecnick\Pdf\ClassObjects
         setlocale(LC_NUMERIC, 'C');
         $this->doctime = time();
         $this->docmodtime = $this->doctime;
-        $seedobj = new \Com\Tecnick\Pdf\Encrypt\Type\Seed();
+        $seedobj = new Encrypt\Type\Seed();
         $this->fileid = md5($seedobj->encrypt('TCPDF'));
         $this->unit = $unit;
         $this->isunicode = $isunicode;
@@ -164,6 +172,8 @@ class Tcpdf extends \Com\Tecnick\Pdf\ClassObjects
      *                       * FullScreen Full screen, with no menu bar, window controls, or any other window visible
      *                       * UseOC (PDF 1.5) Optional content group panel visible
      *                       * UseAttachments (PDF 1.6) Attachments panel visible
+     *
+     * @return Tcpdf
      */
     public function setDisplayMode($zoom = 'default', $layout = 'SinglePage', $mode = 'UseNone')
     {

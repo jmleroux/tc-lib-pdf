@@ -15,7 +15,6 @@
 
 namespace Com\Tecnick\Pdf;
 
-use \Com\Tecnick\Pdf\Exception as PdfException;
 use \Com\Tecnick\Color\Pdf as ObjColor;
 use \Com\Tecnick\Barcode\Barcode as ObjBarcode;
 use \Com\Tecnick\File\File as ObjFile;
@@ -39,7 +38,7 @@ use \Com\Tecnick\Pdf\Image\Import as ObjImage;
  * @license     http://www.gnu.org/copyleft/lesser.html GNU-LGPL v3 (see LICENSE.TXT)
  * @link        https://github.com/tecnickcom/tc-lib-pdf
  */
-abstract class ClassObjects extends \Com\Tecnick\Pdf\MetaInfo
+abstract class ClassObjects extends MetaInfo
 {
     /**
      * Encrypt object
@@ -113,11 +112,11 @@ abstract class ClassObjects extends \Com\Tecnick\Pdf\MetaInfo
         $this->barcode = new ObjBarcode;
         $this->file = new ObjFile;
         $this->uniconv = new ObjUniConvert;
-        
+
         if ($this->encrypt === null) {
             $this->encrypt = new ObjEncrypt();
         }
-        
+
         $this->page = new ObjPage(
             $this->unit,
             $this->color,
@@ -142,7 +141,7 @@ abstract class ClassObjects extends \Com\Tecnick\Pdf\MetaInfo
             $this->isunicode,
             $this->pdfa
         );
-        
+
         $this->image = new ObjImage(
             $this->kunit,
             $this->encrypt,

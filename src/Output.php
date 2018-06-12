@@ -15,6 +15,8 @@
 
 namespace Com\Tecnick\Pdf;
 
+use Com\Tecnick\Color\Model\Template;
+use Com\Tecnick\Pdf\Font\Font;
 use \Com\Tecnick\Pdf\Font\Output as OutFont;
 
 /**
@@ -40,6 +42,37 @@ abstract class Output
      * @var array
      */
     protected $objid = array();
+
+    /**
+     * @var string
+     */
+    protected $pdfver;
+
+    protected $encrypt;
+
+    /**
+     * @var Page\Page
+     */
+    protected $page;
+
+    protected $pon;
+
+    /**
+     * @var Graph\Base
+     */
+    protected $graph;
+
+    /**
+     * @var Template
+     */
+    protected $color;
+
+    /**
+     * @var Font
+     */
+    protected $font;
+
+    protected $pdfx;
 
     /**
      * Returns the RAW PDF string
@@ -192,7 +225,7 @@ abstract class Output
         if (!$this->pdfa && !$this->sRGB) {
             return '';
         }
-        
+
         $oid = ++$this->pon;
         $this->objid['srgbicc'] = $oid;
         $out = $oid.' 0 obj'."\n";
@@ -316,6 +349,7 @@ abstract class Output
      * Returns the PDF Catalog entry
      *
      * @return string
+     * @throws Page\Exception
      */
     protected function getOutCatalog()
     {
@@ -661,9 +695,19 @@ abstract class Output
      */
     protected function getOnOff($val)
     {
-        if (bool($val)) {
+        if (true === $val) {
             return 'ON';
         }
         return 'OFF';
+    }
+
+    protected function getOutTextString($a_meta_language, $oid)
+    {
+        // TODO
+    }
+
+    protected function getOutViewerPref()
+    {
+        // TODO
     }
 }

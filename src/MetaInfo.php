@@ -28,7 +28,7 @@ namespace Com\Tecnick\Pdf;
  * @license     http://www.gnu.org/copyleft/lesser.html GNU-LGPL v3 (see LICENSE.TXT)
  * @link        https://github.com/tecnickcom/tc-lib-pdf
  */
-abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
+abstract class MetaInfo extends Output
 {
     /**
      * TCPDF version.
@@ -145,8 +145,8 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
     /**
      * Set a field value only if it is not empty.
      *
-     * @param strign $field Field name
-     * @param srting $value Value to set
+     * @param string $field Field name
+     * @param string $value Value to set
      */
     private function setNonEmptyFieldValue($field, $value)
     {
@@ -212,7 +212,7 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
      *
      * @param string $version PDF document version.
      *
-     * @throw PdfException in case of error
+     * @throws Exception in case of error
      */
     public function setPDFVersion($version = '1.7')
     {
@@ -222,7 +222,7 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
         }
         $isvalid = preg_match('/^[1-9]+[.][0-9]+$/', $version);
         if (empty($isvalid)) {
-            throw new PdfException('Invalid PDF version format');
+            throw new Exception('Invalid PDF version format');
         }
         $this->pdfver = $version;
         return $this;
@@ -290,7 +290,7 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
         .$this->version
         ."\x20\x28\x68\x74\x74\x70\x73\x3a\x2f\x2f\x74\x63\x70\x64\x66\x2e\x6f\x72\x67\x29";
     }
-    
+
     /**
      * Returns a formatted date for meta information
      *
@@ -372,7 +372,7 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
         .'-'.substr($this->fileid, 12, 4)
         .'-'.substr($this->fileid, 16, 4)
         .'-'.substr($this->fileid, 20, 12);
-        
+
         // @codingStandardsIgnoreStart
         $xmp = '<?xpacket begin="'.$this->uniconv->chr(0xfeff).'" id="W5M0MpCehiHzreSzNTczkc9d"?>'."\n"
         .'<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 4.2.1-c043 52.372728, 2009/01/18-15:08:04">'."\n"
@@ -414,7 +414,7 @@ abstract class MetaInfo extends \Com\Tecnick\Pdf\Output
         ."\t\t\t".'<xmpMM:DocumentID>'.$uuid.'</xmpMM:DocumentID>'."\n"
         ."\t\t\t".'<xmpMM:InstanceID>'.$uuid.'</xmpMM:InstanceID>'."\n"
         ."\t\t".'</rdf:Description>'."\n";
-        
+
         if ($this->pdfa) {
             $xmp .= "\t\t".'<rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">'."\n"
             ."\t\t\t".'<pdfaid:part>1</pdfaid:part>'."\n"
